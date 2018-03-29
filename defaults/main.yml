@@ -1,0 +1,15 @@
+---
+# defaults file for postfix SMTP server
+
+software:
+  - postfix
+  - firewalld
+  - telnet
+  - mailx
+  
+configfiles:
+  - README.md
+databasefiles:
+  - README.md
+
+rootalias: nobody@example.com

@@ -1,0 +1,65 @@
+---
+# tasks file for postfix-mail-transport
+
+###############################################################################
+# Common requirements for packages
+- name: Verify latest EPEL repo is installed
+  package: name=epel-release state=present
+
+###############################################################################
+# Install and configure postfix
+- name: INSTALL Software for mail transport
+  yum: name={{item}} state=installed
+  with_items: '{{software}}'
+  notify: restart postfix
+- name: Creates chroot directory
+  file: path=/var/spool/postfix/etc state=directory
+- name: Copy files to chroot
+  copy: remote_src=True src=/etc/{{ item }} dest=/var/spool/postfix/etc/{{ item }}
+  with_items:
+    - resolv.conf
+    - services
+
+- name: Copy files to postfix folder
+  copy: src={{ item }} dest=/etc/postfix/{{ item }}
+  with_items: "{{configfiles}}"
+  notify: restart postfix
+- name: Copy databases to postfix folder
+  copy: src={{ item }} dest=/etc/postfix/{{ item }}
+  with_items: "{{databasefiles}}"
+  notify: rebuild databases
+- name: Copy new aliases file
+  copy: src=aliases dest=/etc/aliases
+  notify: newaliases
+
+
+###############################################################################
+# Configure firewall rules
+- name: Make sure firewall service is running
+  service: name=firewalld enabled=yes state=started
+- name: Check and add firewall services
+  firewalld: service={{ item }} permanent=true state=enabled
+  with_items:
+    - smtp
+  notify: restart firewalld
+# - name: Check and open firewall ports
+#   firewalld: port={{ item }} permanent=true state=enabled
+#   with_items:
+#     - 5252/tcp
+#     - 161/udp
+#     - 587/tcp
+#  notify: restart firewalld
+
+
+###############################################################################
+# Install utilities for managing the mail server
+- name: create root binary directory
+  file: path=/root/bin state=directory owner=root group=root mode=0750
+- name: verify command to delete messages from mail queue
+  copy: src=postfix-delete dest=/root/bin/postfix-delete mode=0755
+- name: List mailq on root login
+  lineinfile: dest=/root/.bash_profile line='mailq'
+# - name: Install packages to manage mail server
+#   package: name={{ item }} state=installed
+#   with_items:
+#     - mailx

@@ -1,0 +1,22 @@
+---
+# handlers file for nginx-load-balancer
+
+- name: restart firewalld
+  service: name=firewalld state=restarted enabled=yes
+
+- name: restart postfix
+  service: name=postfix state=restarted enabled=yes
+- name:  postfix reload
+  shell: postfix reload
+
+- name: newaliases
+  shell: newaliases
+  notify: postfix reload
+- name: postmap transport
+  shell: postmap /etc/postfix/transport
+  notify: postfix reload
+
+- name: rebuild databases
+  shell: postmap /etc/postfix/{{item}}
+  with_items: "{{databasefiles}}"
+  notify: postfix reload

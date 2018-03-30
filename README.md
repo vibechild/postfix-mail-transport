@@ -33,7 +33,7 @@ This role does not require any other roles.
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+Call the role and pass in the rootalias variable, or define it elsewhere:
 
     - hosts: servers
       roles:
